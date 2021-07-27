@@ -43,6 +43,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int _currentNews = 0;
+  final CarouselController _controller = CarouselController();
+
   late Future<News> futureNews;
   late Future<Categories> futureCategories;
   late Future<Post> futurePost;
@@ -146,22 +149,70 @@ class _MyHomePageState extends State<MyHomePage> {
         future: futureNews,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return CarouselSlider.builder(
-              options: CarouselOptions(
-                height: 109,
-                viewportFraction: 1,
-                autoPlay: true,
-                autoPlayInterval: Duration(seconds: 3),
-                autoPlayAnimationDuration: Duration(milliseconds: 600),
-                autoPlayCurve: Curves.fastOutSlowIn,
-                enlargeCenterPage: true,
+            return Stack(children: [
+              CarouselSlider.builder(
+                options: CarouselOptions(
+                  height: 125,
+                  viewportFraction: 1,
+                  autoPlay: true,
+                  autoPlayInterval: Duration(seconds: 3),
+                  autoPlayAnimationDuration: Duration(milliseconds: 600),
+                  autoPlayCurve: Curves.fastOutSlowIn,
+                  enlargeCenterPage: true,
+                  onPageChanged: (index, reason) {
+                    setState(() {
+                      _currentNews = index;
+                    });
+                  },
+                ),
+                itemCount: snapshot.data!.data.length,
+                itemBuilder: (context, index, realIndex) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          offset: Offset(0, 4),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(snapshot.data!.data[index].imageUrl),
+                    ),
+                  ),
+                ),
               ),
-              itemCount: snapshot.data!.data.length,
-              itemBuilder: (context, index, realIndex) => ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(snapshot.data!.data[index].imageUrl),
+              Positioned(
+                bottom: 16,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: snapshot.data!.data.asMap().entries.map((entry) {
+                    return Container(
+                      width: 6.0,
+                      height: 6.0,
+                      margin: EdgeInsets.symmetric(
+                        vertical: 8.0,
+                        horizontal: 4.0,
+                      ),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black)
+                            .withOpacity(_currentNews == entry.key ? 1 : 0.1),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-            );
+            ]);
           } else if (snapshot.hasError) {
             return Text('${snapshot.error}');
           }
